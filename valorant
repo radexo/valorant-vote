@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Голосование за агентов Valorant</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-inter transition-colors duration-300">
+  <header class="flex justify-between items-center p-4 bg-white dark:bg-gray-800 shadow sticky top-0 z-20">
+    <h1 class="text-2xl font-extrabold">Голосование за агентов Valorant</h1>
+    <div class="flex items-center space-x-4">
+      <div class="hidden md:flex space-x-2">
+        <a href="#" id="share-vk" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">VK</a>
+        <a href="#" id="share-twitter" class="px-3 py-1 bg-blue-400 text-white rounded text-sm">Twitter</a>
+        <a href="#" id="share-telegram" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">Telegram</a>
+        <a href="#" id="share-whatsapp" class="px-3 py-1 bg-green-500 text-white rounded text-sm">WhatsApp</a>
+        <button id="share-copy" class="px-3 py-1 bg-gray-600 text-white rounded text-sm">Скопировать</button>
+      </div>
+      <button id="themeToggle" class="p-2 bg-gray-200 dark:bg-gray-700 rounded">🌓</button>
+      <div class="md:hidden relative">
+        <button id="shareToggle" class="p-2 bg-gray-200 dark:bg-gray-700 rounded">🔗</button>
+        <div id="shareMenu" class="hidden absolute right-0 mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden">
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">VK</a>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Twitter</a>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Telegram</a>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">WhatsApp</a>
+          <button id="shareCopyMobile" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Скопировать</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-4 space-y-8">
+    <!-- Leaderboard -->
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Лидерборд</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h3 class="font-semibold text-lg mb-2">🏆 Лучшие агенты</h3>
+          <table class="w-full table-auto">
+            <thead class="bg-gray-200 dark:bg-gray-700">
+              <tr><th class="p-2">Агент</th><th class="p-2">Голосов</th></tr>
+            </thead>
+            <tbody id="best-list" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+          </table>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h3 class="font-semibold text-lg mb-2">🥉 Самые «тупые» агенты</h3>
+          <table class="w-full table-auto">
+            <thead class="bg-gray-200 dark:bg-gray-700">
+              <tr><th class="p-2">Агент</th><th class="p-2">Голосов</th></tr>
+            </thead>
+            <tbody id="dumb-list" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Achievements -->
+    <section id="achievements-section" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+      <h2 class="text-xl font-semibold mb-4">Достижения</h2>
+      <div id="achievements" class="flex flex-wrap gap-2"></div>
+    </section>
+
+    <!-- Agents list -->
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Список агентов</h2>
+      <div id="agent-grid" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    if (!localStorage.theme || localStorage.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      localStorage.theme = 'dark';
+    }
+    themeToggle.onclick = () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    };
+
+    // Share
+    document.getElementById('share-copy').onclick = () => navigator.clipboard.writeText(location.href);
+    const shareToggle = document.getElementById('shareToggle');
+    const shareMenu = document.getElementById('shareMenu');
+    shareToggle.onclick = () => shareMenu.classList.toggle('hidden');
+    document.getElementById('shareCopyMobile').onclick = () => { navigator.clipboard.writeText(location.href); shareMenu.classList.add('hidden'); };
+
+    // Agents data
+    const agents = [
+      {name:'Brimstone',strong:'Надёжное покрытие карты дымом, может носиться внутри с дробашом и делать ниндзя дефьюз.',weak:'Низкая мобильность, постоянно теряется внутри смоков и бесит тиммейтов глупым дымом.',odd:'Типичный Brim: Гений стратег'},
+      {name:'Phoenix',strong:'Восстановление после ульты сжигает противников и даёт мобильность.',weak:'Уязвимость во время разгона способностей.',odd:'Пироманы художники'},
+      {name:'Sage',strong:'Воскрешение союзников и заморозка противников.',weak:'Очень медленная ульта и зависимость от команды.',odd:'Йоги, ожидающие чаю в бою'},
+      {name:'Sova',strong:'Потрясающая разведка через стены дротиками.',weak:'Сильно зависит от точности прицеливания.',odd:'Охотники-одиночки с луками'},
+      {name:'Viper',strong:'Контроль зоны ядом.',weak:'Зависимость от времени воздействия яда.',odd:'Химики-экспериментаторы'},
+      {name:'Cypher',strong:'Постоянный фид и информация.',weak:'Ограниченная мобильность.',odd:'Параноики с камерами'},
+      {name:'Reyna',strong:'Избыточное усиление после убийств.',weak:'Бесполезна без фрагов.',odd:'Соло-маньяки'},
+      {name:'Killjoy',strong:'Автоконтроль точек роботами.',weak:'Ограничен уроном ловушек.',odd:'Инженеры-изоленты'},
+      {name:'Breach',strong:'Мощный контроль открытых зон ударами.',weak:'Промах карается.',odd:'Любители эффектных заходов'},
+      {name:'Omen',strong:'Неожиданные телепорты.',weak:'Зависит от знания карты.',odd:'Мистики-любители'},
+      {name:'Jett',strong:'Высокая мобильность и эскапизм.',weak:'Низкий урон без команды.',odd:'Экстремалы'},
+      {name:'Raze',strong:'Урон по площадям гранатами.',weak:'Недостаток точности.',odd:'Пиротехники'},
+      {name:'Skye',strong:'Разведка живыми существами.',weak:'Зависит от линии обзора.',odd:'Защитники флоры'},
+      {name:'Yoru',strong:'Скрытность и фейковые переходы.',weak:'Сложность контроля иллюзий.',odd:'Паркурщики'},
+      {name:'Astra',strong:'Глобальный контроль пространства.',weak:'Требует координации.',odd:'Астрономы'},
+      {name:'KAY/O',strong:'Отключение способностей врага.',weak:'Уязвим после.',odd:'AI-специалисты'},
+      {name:'Chamber',strong:'Точные выстрелы на дальних дистанциях.',weak:'Слаб без пистолета.',odd:'Графоманы элегантности'},
+      {name:'Neon',strong:'Мгновенное перемещение по карте.',weak:'Зависит от заряда.',odd:'Ночные лампы'},
+      {name:'Fade',strong:'Трекинг врагов.',weak:'Низкая выживаемость.',odd:'Любители хоррора'},
+      {name:'Harbor',strong:'Контроль воды.',weak:'Сложен на узких картах.',odd:'Серферы'},
+      {name:'Gekko',strong:'Способности питомцев.',weak:'Сложность управления.',odd:'Коллекционеры плюша'},
+      {name:'Deadlock',strong:'Изоляция проходов.',weak:'Зависит от ловушек.',odd:'Квестеры'},
+      {name:'Iso',strong:'Постоянное давление.',weak:'Нуждается в поддержке.',odd:'Киберпанк-разработчики'},
+      {name:'Clove',strong:'Быстрые атаки.',weak:'Ограниченная дальность.',odd:'Каллиграфы ножом'},
+      {name:'Vyse',strong:'Контроль толпы звуком.',weak:'Мелодии не всегда отпугивают.',odd:'Диджеи'},
+      {name:'Tejo',strong:'Мобильность и зачистка точек.',weak:'Мало точечных умений.',odd:'Футболисты'},
+      {name:'Waylay',strong:'Скрытность и неожиданные засады.',weak:'Зависит от маскировки.',odd:'Мастера стелса'}
+    ];
+
+    const maxVotes=3;
+    function getVotes(k,n){return parseInt(localStorage.getItem(k+"_"+n))||0;}
+    function setVotes(k,n,v){localStorage.setItem(k+"_"+n,v);}    
+    const votes={total:0,usedBoth:false,secret:false};
+
+    const achievementsArr=[
+      {id:'first',text:'Первый голос',check:()=>votes.total>=1},
+      {id:'five',text:'5 голосов',check:()=>votes.total>=5},
+      {id:'ten',text:'10 голосов',check:()=>votes.total>=10},
+      {id:'three_up',text:'3 плюса одному',check:()=>agents.some(a=>getVotes('up',a.name)>=3)},
+      {id:'three_down',text:'3 минуса одному',check:()=>agents.some(a=>getVotes('down',a.name)>=3)},
+      {id:'diff10',text:'Голосовал за 10 агентов',check:()=>agents.filter(a=>getVotes('up',a.name)>0).length>=10},
+      {id:'both',text:'Использовал оба типа',check:()=>votes.usedBoth},
+      {id:'all_up',text:'За всех агентов',check:()=>agents.every(a=>getVotes('up',a.name)>=1)},
+      {id:'all_down',text:'Против всех агентов',check:()=>agents.every(a=>getVotes('down',a.name)>=1)},
+      {id:'twenty',text:'20 голосов',check:()=>votes.total>=20},
+      {id:'secret',text:'Тайный маэстро',secret:true,check:()=>votes.secret}
+    ];
+
+    function updateAchievementsSection(){
+      const sec=document.getElementById('achievements-section');
+      const cont=document.getElementById('achievements');cont.innerHTML='';let any=false;
+      achievementsArr.forEach(a=>{if(localStorage.getItem(a.id)){any=true;const span=document.createElement('span');span.className='inline-flex items-center bg-yellow-400 text-black px-2 py-1 rounded space-x-1';span.innerHTML=`<span>${a.secret?'🔒':'✅'}</span><span>${a.text}</span>`;cont.appendChild(span);}});
+      sec.classList.toggle('hidden',!any);
+    }
+
+    function checkAchievements(){achievementsArr.forEach(a=>{if(!localStorage.getItem(a.id)&&a.check()){localStorage.setItem(a.id,'1');if(a.secret)confetti({emojis:['🎉','✨','🎆'],emojiSize:40,particles:50});}});updateAchievementsSection();}
+
+    function renderLeaderboard(){const bestEl=document.getElementById('best-list'),dumbEl=document.getElementById('dumb-list');bestEl.innerHTML='';dumbEl.innerHTML='';agents.slice().sort((a,b)=>getVotes('up',b.name)-getVotes('up',a.name)).slice(0,5).forEach((a,i)=>{const cls=i===0?'text-2xl':'text-base';bestEl.insertAdjacentHTML('beforeend',`<tr class='hover:bg-gray-50 dark:hover:bg-gray-700 ${cls}'><td class='p-2 font-semibold'>${['🏆','🥇','🥈','🥉','🎖️'][i]||''} ${a.name}</td><td class='p-2 font-semibold text-green-600'>${getVotes('up',a.name)}</td></tr>`)});agents.slice().sort((a,b)=>getVotes('down',b.name)-getVotes('down',a.name)).slice(0,5).forEach((a,i)=>{const cls=i===0?'text-2xl':'text-base';dumbEl.insertAdjacentHTML('beforeend',`<tr class='hover:bg-gray-50 dark:hover:bg-gray-700 ${cls}'><td class='p-2 font-semibold'>${['🏆','🥇','🥈','🥉','🎖️'][i]||''} ${a.name}</td><td class='p-2 font-semibold text-red-600'>${getVotes('down',a.name)}</td></tr>`)});}
+
+    function renderAgents(){const grid=document.getElementById('agent-grid');grid.innerHTML='';agents.forEach(a=>{const card=document.createElement('div');card.className='bg-white dark:bg-gray-800 p-6 rounded-lg shadow flex flex-row justify-between';card.innerHTML=`<div class='w-3/4'><h3 class='text-lg font-semibold mb-2'>${a.name}</h3><p class='mb-1 text-green-600'><strong>Сильная сторона:</strong> ${a.strong}</p><p class='mb-1 text-red-600'><strong>Почему не брать:</strong> ${a.weak}</p><p class='italic'><strong>Типичный ${a.name}:</strong> ${a.odd}</p></div><div class='w-1/4 flex flex-col items-center text-2xl'><button class='up text-green-500 mb-1' onclick="vote('${a.name}','up')">▲</button><span id='up-${a.name}'>${getVotes('up',a.name)}</span><button class='down text-red-500 mt-1' onclick="vote('${a.name}','down')">▼</button><span id='down-${a.name}'>${getVotes('down',a.name)}</span></div>`;grid.appendChild(card);});}
+
+    function vote(name,type){const curr=getVotes(type,name);if(curr<maxVotes){setVotes(type,name,curr+1);votes.total++;votes.usedBoth=votes.usedBoth||(getVotes('up',name)>0&&getVotes('down',name)>0);if(curr+1===maxVotes)votes.secret=true;document.getElementById(`${type}-${name}`).textContent=curr+1;renderLeaderboard();checkAchievements();}}
+
+    document.addEventListener('DOMContentLoaded',()=>{renderLeaderboard();renderAgents();checkAchievements();});
+  </script>
+</body>
+</html>
